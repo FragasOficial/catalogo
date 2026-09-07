@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Produto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --amarelo: #f5a623;
+            --vinho: #800020;
+            --marrom: #2e0f0f;
+            --cinza-claro: #f4f4f4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--cinza-claro); color: #333; }
+
+        header {
+            background: var(--marrom); color: white; padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
+        .busca { flex: 1; margin: 0 2rem; max-width: 500px; }
+        .busca input { width: 100%; padding: 0.6rem 1rem; border-radius: 20px; border: none; background: rgba(255,255,255,0.1); color: white; }
+        .header-acoes { display: flex; gap: 15px; cursor: pointer; }
+
+        .container {
+            max-width: 1100px; margin: 2rem auto; padding: 2rem;
+            background: white; border-radius: 15px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .galeria { display: flex; flex-direction: column; align-items: center; }
+        .img-principal {
+            width: 100%; height: 450px; object-fit: contain;
+            background: #fafafa; border-radius: 10px; padding: 1rem; border: 1px solid #eee;
+        }
+        .miniaturas { display: flex; gap: 10px; margin-top: 1rem; }
+        .miniatura {
+            width: 70px; height: 70px; object-fit: cover; cursor: pointer;
+            border-radius: 8px; border: 2px solid transparent; background: #fafafa; padding: 0.2rem;
+        }
+        .miniatura.ativa { border-color: var(--amarelo); }
+
+        .info-produto h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .categoria { color: #888; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; }
+        .preco { font-size: 2.5rem; font-weight: 700; color: var(--vinho); margin: 1rem 0; }
+        .preco small { font-size: 1rem; color: #888; font-weight: 400; }
+        .descricao { line-height: 1.8; color: #555; margin-bottom: 2rem; }
+
+        .qtd-seletor {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 1.5rem;
+            background: #f4f4f4; padding: 0.5rem 1rem; border-radius: 10px; width: fit-content;
+        }
+        .qtd-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+
+        .botoes { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .btn {
+            padding: 1rem 2rem; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; transition: 0.2s; flex: 1; min-width: 200px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .btn-comprar { background: var(--amarelo); color: #222; }
+        .btn-favoritar { background: var(--vinho); color: white; }
+
+        /* Seção "Compre também" */
+        .mais-produtos { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+        .mais-produtos h2 { margin-bottom: 1.5rem; }
+        .grid-produtos {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;
+        }
+        .card {
+            background: white; border-radius: 12px; padding: 1rem; text-align: center;
+            transition: 0.3s; border: 1px solid #eee;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 150px; object-fit: contain; margin-bottom: 1rem; }
+        .card-titulo { font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .card-preco { color: var(--vinho); font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; }
+        .card-btn {
+            background: var(--amarelo); border: none; padding: 0.5rem; width: 100%;
+            border-radius: 6px; cursor: pointer; font-weight: 600;
+        }
+
+        footer {
+            background: var(--marrom); color: #ccc; padding: 2rem;
+            text-align: center; margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; padding: 1rem; gap: 2rem; }
+            h1 { font-size: 1.8rem; }
+            .img-principal { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="window.location.href='/'">🍫 Minha Loja</div>
+        <div class="busca"><input type="text" placeholder="Buscar produtos..."></div>
+        <div class="header-acoes">
+            <span onclick="window.location.href='/admin'">👤 Conta</span>
+            <span onclick="alert('Sacola vazia!')">🛒 Sacola</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="galeria">
+            <img id="imgPrincipal" class="img-principal" src="" alt="Produto">
+            <div class="miniaturas" id="miniaturas"></div>
+        </div>
+
+        <div class="info-produto">
+            <span class="categoria" id="categoria"></span>
+            <h1 id="titulo"></h1>
+            <div class="preco">
+                <span id="preco"></span>
+                <small id="parcelamento"></small>
+            </div>
+            <p class="descricao" id="descricao"></p>
+
+            <div class="qtd-seletor">
+                <button class="qtd-btn" onclick="alterarQtd(-1)">−</button>
+                <span id="qtdTexto" style="font-weight: bold; font-size: 1.2rem;">1</span>
+                <button class="qtd-btn" onclick="alterarQtd(1)">+</button>
+            </div>
+
+            <div class="botoes">
+                <button class="btn btn-comprar" onclick="alert('Produto adicionado à sacola!')">ADICIONAR À SACOLA</button>
+                <button class="btn btn-favoritar">♥ FAVORITAR</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- SEÇÃO COMPRE TAMBÉM -->
+    <section class="mais-produtos">
+        <h2>Compre também</h2>
+        <div class="grid-produtos" id="gridProdutos"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Minha Loja. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        let quantidade = 1;
+        const qtdTexto = document.getElementById('qtdTexto');
+
+        function alterarQtd(valor) {
+            quantidade += valor;
+            if (quantidade < 1) quantidade = 1;
+            qtdTexto.textContent = quantidade;
+        }
+
+        function trocarImagem(elemento, url) {
+            document.getElementById('imgPrincipal').src = url;
+            document.querySelectorAll('.miniatura').forEach(m => m.classList.remove('ativa'));
+            elemento.classList.add('ativa');
+        }
+
+        function formatarPreco(valor) {
+            const numero = parseFloat(valor);
+            if (isNaN(numero)) return 'R$ 0,00';
+            return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Pega o ID da URL (ex: produto.html?id=1)
+        const urlParams = new URLSearchParams(window.location.search);
+        const produtoId = urlParams.get('id');
+
+        // Função para renderizar os produtos na seção "Compre também"
+        function renderizarCompreTambem(produtos, idParaExcluir) {
+            const grid = document.getElementById('gridProdutos');
+            grid.innerHTML = '';
+
+            // Filtra para não mostrar o produto que já está na página principal
+            const outrosProdutos = produtos.filter(p => p.id != idParaExcluir);
+
+            outrosProdutos.forEach(p => {
+                let imagensCards = [];
+                try { imagensCards = JSON.parse(p.fotos); } catch (e) { imagensCards = []; }
+                if (imagensCards.length === 0) imagensCards = ['https://via.placeholder.com/100/ccc/333?text=Sem+Img'];
+
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.innerHTML = `
+                    <div onclick="window.location.href='produto.html?id=${p.id}'" style="cursor: pointer;">
+                        <img src="${imagensCards[0]}" alt="${p.nome}">
+                        <div class="card-titulo">${p.nome}</div>
+                        <div class="card-preco">${formatarPreco(p.preco)}</div>
+                    </div>
+                    <button class="card-btn" onclick="event.stopPropagation(); alert('${p.nome} adicionado!')">Adicionar</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Função principal que carrega tudo
+        async function carregarPagina() {
+            if (!produtoId) {
+                document.getElementById('titulo').innerText = "Produto não encontrado";
+                return;
+            }
+
+            try {
+                // 1. Busca o produto específico
+                const respostaProduto = await fetch(`/api/produtos/${produtoId}`);
+                if (!respostaProduto.ok) throw new Error("Erro ao buscar produto");
+                const p = await respostaProduto.json();
+                
+                document.getElementById('categoria').innerText = p.categoria;
+                document.getElementById('titulo').innerText = p.nome;
+                document.getElementById('preco').innerText = formatarPreco(p.preco);
+                document.getElementById('parcelamento').innerText = `ou 3x de ${formatarPreco(p.preco / 3)} sem juros`;
+                document.getElementById('descricao').innerText = p.descricao;
+
+                let imagens = [];
+                try { imagens = JSON.parse(p.fotos); } catch (e) { imagens = []; }
+                if (imagens.length === 0) imagens = ['https://via.placeholder.com/400x400/d4af37/ffffff?text=Sem+Imagem'];
+
+                document.getElementById('imgPrincipal').src = imagens[0];
+                
+                const minDiv = document.getElementById('miniaturas');
+                minDiv.innerHTML = '';
+                imagens.forEach((url, index) => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.classList.add('miniatura');
+                    if (index === 0) img.classList.add('ativa');
+                    img.onclick = () => trocarImagem(img, url);
+                    minDiv.appendChild(img);
+                });
+
+                // 2. Busca TODOS os produtos para a seção "Compre também"
+                const respostaTodos = await fetch('/api/produtos');
+                const todosProdutos = await respostaTodos.json();
+
+                // 3. Renderiza a seção abaixo, excluindo o produto atual
+                renderizarCompreTambem(todosProdutos, p.id);
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('titulo').innerText = "Erro ao carregar produto";
+            }
+        }
+
+        carregarPagina();
+    </script>
+</body>
+</html>

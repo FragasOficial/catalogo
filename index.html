@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Loja | Início</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --amarelo: #f5a623; --vinho: #800020; --marrom: #2e0f0f; --cinza-claro: #f4f4f4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--cinza-claro); color: #333; }
+
+        header { background: var(--marrom); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
+        .busca { flex: 1; margin: 0 2rem; max-width: 500px; }
+        .busca input { width: 100%; padding: 0.6rem 1rem; border-radius: 20px; border: none; outline: none; background: rgba(255,255,255,0.1); color: white; transition: 0.3s; }
+        .busca input::placeholder { color: #ccc; }
+        .busca input:focus { background: white; color: #333; }
+        .header-acoes { display: flex; gap: 15px; cursor: pointer; align-items: center; }
+        .sacola-indicador { background: var(--amarelo); color: #333; font-weight: bold; border-radius: 50%; padding: 4px 8px; font-size: 12px; }
+
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 12px; padding: 1rem; text-align: center; transition: 0.3s; border: 1px solid #eee; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 180px; object-fit: contain; margin-bottom: 1rem; }
+        .card-titulo { font-weight: 600; margin-bottom: 0.5rem; }
+        .card-preco { color: var(--vinho); font-weight: 700; font-size: 1.2rem; margin-bottom: 1rem; }
+        .btn { padding: 0.6rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 5px; transition: 0.2s; }
+        .btn-comprar { background: var(--amarelo); color: #222; }
+        .btn-whatsapp { background: #25D366; color: white; }
+        .btn-whatsapp:hover { background: #1fb958; }
+        .btn-comprar:hover { background: #e0941a; }
+
+        .sem-produtos { text-align: center; padding: 2rem; color: #888; }
+
+        footer { background: var(--marrom); color: #ccc; padding: 2rem; text-align: center; margin-top: 4rem; }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; gap: 1rem; }
+            .busca { margin: 0; width: 100%; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="window.location.href='/'">🍫 Minha Loja</div>
+        <div class="busca"><input type="text" id="campoBusca" placeholder="Buscar produtos deliciosos..." onkeyup="buscarProdutos()"></div>
+        <div class="header-acoes">
+            <span id="linkConta" style="display: none; cursor: pointer;" onclick="window.location.href='/admin'">👤 Conta</span>
+            <span onclick="abrirSacola()" style="display: flex; align-items: center; gap: 5px;">🛒 Sacola <span class="sacola-indicador" id="sacolaCount">0</span></span>
+        </div>
+    </header>
+
+    <main class="container" id="areaProdutos">
+        <div id="gridProdutos" class="grid-produtos"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Minha Loja. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- MODAL DA SACOLA -->
+    <div id="modalSacola" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin-bottom: 20px;">Sua Sacola</h2>
+            <div id="itensSacola"></div>
+            <h3 style="margin-top: 20px;">Total: <span id="totalSacola">R$ 0,00</span></h3>
+            <button class="btn btn-comprar" onclick="finalizarPedido()" style="margin-top: 15px;">FINALIZAR PEDIDO</button>
+            <button onclick="document.getElementById('modalSacola').style.display='none'" style="background: #ccc; border: none; padding: 10px; width: 100%; margin-top: 10px; border-radius: 6px; cursor: pointer;">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        let produtos = [];
+        let sacola = JSON.parse(localStorage.getItem('sacola')) || [];
+
+        function formatarPreco(valor) {
+            const numero = parseFloat(valor);
+            if (isNaN(numero)) return 'R$ 0,00';
+            return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Função para buscar e renderizar produtos
+        async function buscarProdutos() {
+            const termo = document.getElementById('campoBusca').value;
+            const url = termo ? `/api/buscar?q=${termo}` : '/api/produtos';
+            try {
+                const resposta = await fetch(url);
+                produtos = await resposta.json();
+                renderizarProdutos();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function renderizarProdutos() {
+            const grid = document.getElementById('gridProdutos');
+            grid.innerHTML = '';
+
+            if (produtos.length === 0) {
+                grid.innerHTML = '<p class="sem-produtos">Nenhum produto encontrado.</p>';
+                return;
+            }
+
+            produtos.forEach(p => {
+                let fotos = [];
+                try { fotos = JSON.parse(p.fotos); } catch (e) {}
+                const imgSrc = fotos.length > 0 ? fotos[0] : 'https://via.placeholder.com/150';
+
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.innerHTML = `
+                    <div onclick="window.location.href='produto.html?id=${p.id}'" style="cursor: pointer;">
+                        <img src="${imgSrc}" alt="${p.nome}">
+                        <div class="card-titulo">${p.nome}</div>
+                        <div class="card-preco">${formatarPreco(p.preco)}</div>
+                    </div>
+                    <button class="btn btn-comprar" onclick="adicionarSacola(${p.id})">Adicionar à Sacola</button>
+                    <button class="btn btn-whatsapp" onclick="comprarWhatsApp(${p.id})">🛒 Comprar no WhatsApp</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Função para adicionar à sacola
+        function adicionarSacola(id) {
+            const produto = produtos.find(p => p.id === id);
+            if (!produto) return;
+
+            const itemExistente = sacola.find(item => item.id === id);
+            if (itemExistente) {
+                itemExistente.qtd++;
+            } else {
+                sacola.push({ id: produto.id, nome: produto.nome, preco: produto.preco, qtd: 1 });
+            }
+            localStorage.setItem('sacola', JSON.stringify(sacola));
+            atualizarContador();
+            alert(`${produto.nome} adicionado à sacola!`);
+        }
+
+        function atualizarContador() {
+            const totalItens = sacola.reduce((acc, item) => acc + item.qtd, 0);
+            document.getElementById('sacolaCount').innerText = totalItens;
+        }
+
+        // Função para abrir a sacola
+        function abrirSacola() {
+            const itensDiv = document.getElementById('itensSacola');
+            itensDiv.innerHTML = '';
+
+            if (sacola.length === 0) {
+                itensDiv.innerHTML = '<p>Sacola vazia.</p>';
+            } else {
+                let total = 0;
+                sacola.forEach(item => {
+                    total += item.preco * item.qtd;
+                    itensDiv.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0;">
+                            <span>${item.nome} (x${item.qtd})</span>
+                            <span>${formatarPreco(item.preco * item.qtd)}</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('totalSacola').innerText = formatarPreco(total);
+            }
+            document.getElementById('modalSacola').style.display = 'flex';
+        }
+
+        // Função para finalizar pedido (Pagamento Dinheiro ou outro)
+        function finalizarPedido() {
+            if (sacola.length === 0) {
+                alert("Sacola vazia!");
+                return;
+            }
+            // Salva na sessão para a página de checkout
+            localStorage.setItem('pedidoAtual', JSON.stringify(sacola));
+            window.location.href = 'checkout.html';
+        }
+
+        // Função para comprar direto pelo WhatsApp
+        function comprarWhatsApp(id) {
+            const produto = produtos.find(p => p.id === id);
+            if (!produto) return;
+
+            const numeroWhatsApp = "5588993754503"; // ⚠️ whatsapp
+            const mensagem = `Olá! Quero comprar o produto:\n\n*${produto.nome}*\nPreço: ${formatarPreco(produto.preco)}\n\nPode me ajudar?`;
+            const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            buscarProdutos();
+            atualizarContador();
+            // Verifica se o administrador está logado
+            if (localStorage.getItem('isAdmin') === 'true') {
+                document.getElementById('linkConta').style.display = 'inline';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo</title>
+    <!-- Importando ícones do FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1, h2 { color: #4a2c2a; font-weight: 600; }
+        
+        /* ===== FORMULÁRIO DE PRODUTO ===== */
+        .form-section { background: #fafafa; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 1px solid #eaeaea; }
+        form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input, textarea { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; width: 100%; box-sizing: border-box; transition: border 0.2s; }
+        input:focus, textarea:focus { border-color: #f5a623; outline: none; }
+        .full-width { grid-column: span 2; }
+        .btn-submit { background: #f5a623; color: #222; width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-submit:hover { background: #e0941a; }
+        .btn-cancel { background: #e0e0e0; color: #333; width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; display: none; }
+        
+        /* ===== SEÇÃO DE PEDIDOS ===== */
+        .pedidos-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        
+        /* ===== BOTÕES DE AÇÃO (MODERNOS) ===== */
+        .pedido-item { border: 1px solid #eaeaea; padding: 20px; margin-bottom: 15px; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .pedido-info { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .pedido-info strong { color: #333; }
+        .pedido-info p { margin: 5px 0 0 0; color: #666; font-size: 14px; line-height: 1.5; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pendente { background: #fff3cd; color: #856404; }
+        .status-concluido { background: #d4edda; color: #155724; }
+        
+        /* LINKS E BOTÕES DE AÇÃO */
+        .pedido-acoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .link-input { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 14px; flex: 1; min-width: 200px; }
+        
+        /* ESTILO ÚNICO PARA TODOS OS BOTÕES DE AÇÃO */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* CORES SUAVES (PASTEL) COM CONTRASTE */
+        .btn-save { background: #fef3c7; color: #92400e; }
+        .btn-save:hover { background: #fde68a; }
+        
+        .btn-use-link { background: #e0f2fe; color: #0369a1; }
+        .btn-use-link:hover { background: #bae6fd; }
+        
+        .btn-whatsapp { background: #dcfce7; color: #166534; }
+        .btn-whatsapp:hover { background: #bbf7d0; }
+        
+        .btn-print { background: #f1f5f9; color: #475569; }
+        .btn-print:hover { background: #e2e8f0; }
+        
+        .btn-concluir { background: #dcfce7; color: #15803d; }
+        .btn-concluir:hover { background: #bbf7d0; }
+        
+        .btn-excluir { background: #fee2e2; color: #b91c1c; }
+        .btn-excluir:hover { background: #fecaca; }
+        
+        /* Botão de imprimir todos (mais destacado) */
+        .btn-print-all { background: #4a2c2a; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; }
+        .btn-print-all:hover { background: #3a1f1d; }
+        
+        /* ===== BARRA DE PESQUISA DE PRODUTOS ===== */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 20px;
+        }
+        .search-bar i { color: #999; }
+        .search-bar input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 15px;
+            width: 100%;
+            color: #333;
+        }
+        
+        /* Exibição dos Produtos */
+        .produto-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid #f0f0f0; margin-bottom: 10px; }
+        .produto-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        .produto-item h3 { margin: 0; font-size: 16px; color: #333; }
+        .produto-item p { margin: 4px 0 0 0; color: #777; font-size: 13px; }
+        
+        /* ===== IFRAME PARA IMPRESSÃO ===== */
+        .print-iframe {
+            position: fixed;
+            left: -9999px;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* ===== NOVO ESTILO PARA IMPRESSÃO EM 2 COLUNAS ===== */
+        @media print {
+            body * { visibility: hidden; }
+            .pedido-item, .pedido-item * { visibility: visible; }
+            .pedido-item { 
+                display: inline-block;
+                vertical-align: top;
+                width: 48%;
+                margin-right: 2%;
+                margin-bottom: 10px;
+                border: 1px solid #ddd; 
+                padding: 10px; 
+                box-shadow: none; 
+                border-radius: 0; 
+                font-size: 11px;
+                page-break-inside: avoid; 
+            }
+            .pedido-acoes, .action-btn, .btn, .btn-submit, .btn-print-all, .search-bar { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Painel Administrativo</h1>
+
+        <div class="form-section">
+            <h2 id="tituloForm">Cadastrar Novo Produto</h2>
+            <form id="formProduto">
+                <input type="hidden" id="produtoId">
+                <input type="text" id="nome" placeholder="Nome do Produto" required>
+                <input type="text" id="categoria" placeholder="Categoria (ex: Doces)" required>
+                <input type="number" step="0.01" id="preco" placeholder="Preço (ex: 24.99)" required>
+                <textarea id="descricao" placeholder="Descrição do produto" rows="3" required class="full-width"></textarea>
+                <input type="url" id="linkPagamento" placeholder="Link de pagamento do produto (ex: Mercado Pago)" class="full-width">
+                <input type="file" id="fotos" accept="image/*" multiple class="full-width">
+                <div id="preview" class="full-width"></div>
+                <button type="submit" id="btnSubmit" class="btn-submit">CADASTRAR PRODUTO</button>
+                <button type="button" id="btnCancelar" class="btn-cancel">Cancelar Edição</button>
+            </form>
+        </div>
+
+        <div class="form-section">
+            <div class="pedidos-header">
+                <h2>Pedidos Recebidos</h2>
+                <button class="action-btn btn-print-all" onclick="imprimirTodos()">
+                    <i class="fa-solid fa-print"></i> Imprimir Todos
+                </button>
+            </div>
+            <div id="listaPedidos"></div>
+        </div>
+
+        <div class="form-section">
+            <h2>Produtos Cadastrados</h2>
+            <!-- BARRA DE PESQUISA -->
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="campoBusca" placeholder="Pesquisar produtos pelo nome..." onkeyup="filtrarProdutos()">
+            </div>
+            <div id="listaProdutos"></div>
+        </div>
+    </div>
+
+    <!-- IFRAME PARA IMPRESSÃO -->
+    <iframe id="printFrame" class="print-iframe"></iframe>
+
+    <script>
+        // ===== PEGAR TOKEN DO SESSIONSTORAGE =====
+        const token = sessionStorage.getItem('adminToken');
+        if (!token) {
+            window.location.href = '/login'; // Redireciona se não estiver logado
+        }
+
+        const form = document.getElementById('formProduto');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const btnCancelar = document.getElementById('btnCancelar');
+        const produtoId = document.getElementById('produtoId');
+        let todosProdutos = []; // Array para armazenar todos os produtos
+
+        // ===== PEDIDOS =====
+        async function carregarPedidos() {
+            const resposta = await fetch('/api/pedidos', {
+                headers: { 'x-admin-token': token }
+            });
+            const pedidos = await resposta.json();
+            const lista = document.getElementById('listaPedidos');
+
+            if (pedidos.length === 0) {
+                lista.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhum pedido recebido.</p>';
+                return;
+            }
+
+            lista.innerHTML = '';
+            pedidos.forEach(p => {
+                let itens = [];
+                try { itens = JSON.parse(p.itens); } catch (e) {}
+                const whatsappLimpo = (p.whatsapp || '').replace(/[^\d+]/g, '');
+                const status = p.status || 'Pendente';
+                const statusClass = status === 'Concluído' ? 'status-concluido' : 'status-pendente';
+
+                const item = document.createElement('div');
+                item.classList.add('pedido-item');
+                item.innerHTML = `
+                    <div class="pedido-info">
+                        <div>
+                            <strong>${p.nome_cliente}</strong>
+                            <p>${p.endereco}</p>
+                            <p>${whatsappLimpo || 'Sem WhatsApp'}</p>
+                        </div>
+                        <div>
+                            <strong>Total: R$ ${parseFloat(p.total).toFixed(2)}</strong>
+                            <p style="margin-top: 8px;"><span class="status-badge ${statusClass}">${status}</span></p>
+                        </div>
+                        <div>
+                            <strong>Itens:</strong>
+                            <p>${itens.map(i => `${i.nome} (x${i.qtd})`).join('<br>')}</p>
+                        </div>
+                    </div>
+                    <div class="pedido-acoes">
+                        <input type="url" class="link-input" placeholder="Cole o link de pagamento aqui" value="${p.link_pagamento || ''}" id="link-${p.id}">
+                        <button class="action-btn btn-save" onclick="salvarLink(${p.id})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                        <button class="action-btn btn-use-link" onclick="sugerirLink(${p.id})"><i class="fa-solid fa-link"></i> Usar Link</button>
+                        <button class="action-btn btn-whatsapp" onclick="enviarWhatsApp(${p.id})"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                        <button class="action-btn btn-print" onclick="imprimirPedido(${p.id})"><i class="fa-solid fa-print"></i> Imprimir</button>
+                        <button class="action-btn btn-concluir" onclick="alterarStatus(${p.id}, 'Concluído')"><i class="fa-solid fa-check"></i> Concluir</button>
+                        <button class="action-btn btn-excluir" onclick="excluirPedido(${p.id})"><i class="fa-solid fa-trash"></i> Excluir</button>
+                    </div>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        async function salvarLink(id) {
+            const link = document.getElementById(`link-${id}`).value;
+            const resposta = await fetch(`/api/pedidos/${id}/pagamento`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-token': token 
+                },
+                body: JSON.stringify({ link_pagamento: link })
+            });
+            if (resposta.ok) alert('Link salvo com sucesso!');
+        }
+
+        async function enviarWhatsApp(id) {
+            const link = document.getElementById(`link-${id}`).value;
+            if (!link) {
+                alert("Por favor, salve um link de pagamento primeiro.");
+                return;
+            }
+            const resposta = await fetch(`/api/pedidos/${id}/enviar-whatsapp`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-token': token 
+                },
+                body: JSON.stringify({ link_pagamento: link })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                window.open(dados.url, '_blank');
+            } else {
+                alert(dados.error || "Erro ao enviar mensagem.");
+            }
+        }
+
+        async function excluirPedido(id) {
+            if (!confirm('Tem certeza que deseja excluir este pedido?')) return;
+            const resposta = await fetch(`/api/pedidos/${id}`, { 
+                method: 'DELETE',
+                headers: { 'x-admin-token': token }
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                alert('✅ Pedido excluído!');
+                carregarPedidos();
+            } else {
+                alert('❌ ' + dados.error);
+            }
+        }
+
+        async function alterarStatus(id, novoStatus) {
+            const resposta = await fetch(`/api/pedidos/${id}/status`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-token': token 
+                },
+                body: JSON.stringify({ status: novoStatus })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                alert('✅ Status atualizado para ' + novoStatus + '!');
+                carregarPedidos();
+            } else {
+                alert('❌ ' + dados.error);
+            }
+        }
+
+        async function sugerirLink(id) {
+            try {
+                const resposta = await fetch(`/api/pedidos/${id}/sugerir-link`, {
+                    headers: { 'x-admin-token': token }
+                });
+                const dados = await resposta.json();
+                if (dados.link) {
+                    document.getElementById(`link-${id}`).value = dados.link;
+                    alert('✅ Link do produto copiado para o campo!');
+                } else {
+                    alert('⚠️ O produto deste pedido não tem um link de pagamento cadastrado.');
+                }
+            } catch (erro) {
+                alert('❌ Erro ao buscar link: ' + erro.message);
+            }
+        }
+
+        // ===== FUNÇÃO DE IMPRESSÃO INDIVIDUAL (Via iframe - SEM BLOQUEIO) =====
+        function imprimirPedido(id) {
+            const pedidoElement = document.getElementById(`link-${id}`).closest('.pedido-item');
+            
+            // Cria o conteúdo de impressão
+            const conteudo = `
+                <html>
+                <head>
+                    <title>Comprovante do Pedido</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #4a2c2a; text-align: center; }
+                        .pedido-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+                        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
+                        .status-pendente { background: #fff3cd; color: #856404; }
+                        .status-concluido { background: #d4edda; color: #155724; }
+                        .pedido-acoes, .action-btn, .btn, .btn-submit { display: none !important; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Comprovante de Pedido</h1>
+                    ${pedidoElement.outerHTML}
+                </body>
+                </html>
+            `;
+
+            // Injeta no iframe
+            const iframe = document.getElementById('printFrame');
+            iframe.srcdoc = conteudo;
+            
+            // Espera o conteúdo carregar e imprime
+            iframe.onload = function() {
+                iframe.contentWindow.print();
+            };
+        }
+
+        // ===== FUNÇÃO DE IMPRESSÃO EM MASSA (Via iframe - SEM BLOQUEIO) =====
+        async function imprimirTodos() {
+            const resposta = await fetch('/api/pedidos', {
+                headers: { 'x-admin-token': token }
+            });
+            const pedidos = await resposta.json();
+
+            if (pedidos.length === 0) {
+                alert("Não há pedidos para imprimir.");
+                return;
+            }
+
+            // Monta o HTML de todos os pedidos com estilo 2 colunas
+            let htmlPedidos = '';
+            pedidos.forEach(p => {
+                let itens = [];
+                try { itens = JSON.parse(p.itens); } catch (e) {}
+                const status = p.status || 'Pendente';
+                const statusClass = status === 'Concluído' ? 'status-concluido' : 'status-pendente';
+                const whatsappLimpo = (p.whatsapp || '').replace(/[^\d+]/g, '');
+
+                htmlPedidos += `
+                    <div class="pedido-item" style="border: 1px solid #ddd; margin-bottom: 10px; padding: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <strong>${p.nome_cliente}</strong>
+                                <p>${p.endereco}</p>
+                                <p>${whatsappLimpo || 'Sem WhatsApp'}</p>
+                            </div>
+                            <div>
+                                <strong>Total: R$ ${parseFloat(p.total).toFixed(2)}</strong>
+                                <p style="margin-top: 5px;"><span class="status-badge ${statusClass}">${status}</span></p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 5px;">
+                            <strong>Itens:</strong>
+                            <p style="font-size: 11px;">${itens.map(i => `${i.nome} (x${i.qtd})`).join(', ')}</p>
+                        </div>
+                        <p style="font-size: 10px; color: #999; margin-top: 5px;">Pedido #${p.id} - ${p.data_pedido ? new Date(p.data_pedido).toLocaleDateString('pt-BR') : ''}</p>
+                    </div>
+                `;
+            });
+
+            // Cria o conteúdo de impressão
+            const conteudo = `
+                <html>
+                <head>
+                    <title>Comprovantes de Pedidos</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 5px; font-size: 11px; }
+                        h1 { color: #4a2c2a; text-align: center; margin-bottom: 10px; font-size: 16px; }
+                        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 10px; }
+                        .status-pendente { background: #fff3cd; color: #856404; }
+                        .status-concluido { background: #d4edda; color: #155724; }
+                        .pedido-item { 
+                            display: inline-block;
+                            vertical-align: top;
+                            width: 48%;
+                            margin-right: 2%;
+                            margin-bottom: 10px;
+                            border: 1px solid #ddd;
+                            padding: 10px;
+                            font-size: 11px;
+                            page-break-inside: avoid;
+                        }
+                        .pedido-acoes, .action-btn, .btn, .btn-submit { display: none !important; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Comprovantes de Pedidos</h1>
+                    ${htmlPedidos}
+                </body>
+                </html>
+            `;
+
+            // Injeta no iframe
+            const iframe = document.getElementById('printFrame');
+            iframe.srcdoc = conteudo;
+
+            // Espera o conteúdo carregar e imprime
+            iframe.onload = function() {
+                iframe.contentWindow.print();
+            };
+        }
+
+        // ===== FUNÇÃO PARA PESQUISAR PRODUTOS =====
+        function filtrarProdutos() {
+            const termo = document.getElementById('campoBusca').value.toLowerCase();
+            const produtosFiltrados = todosProdutos.filter(p => p.nome.toLowerCase().includes(termo));
+            
+            renderizarListaProdutos(produtosFiltrados);
+        }
+
+        // ===== FUNÇÃO PARA RENDERIZAR A LISTA DE PRODUTOS =====
+        function renderizarListaProdutos(produtos) {
+            const lista = document.getElementById('listaProdutos');
+
+            if (produtos.length === 0) {
+                lista.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhum produto encontrado.</p>';
+                return;
+            }
+
+            lista.innerHTML = '';
+            produtos.forEach(p => {
+                let fotos = [];
+                try { fotos = JSON.parse(p.fotos); } catch (e) {}
+                const imgSrc = fotos.length > 0 ? fotos[0] : 'https://via.placeholder.com/60';
+                const linkStatus = p.link_pagamento ? p.link_pagamento : '<span style="color: #999;">Não definido</span>';
+
+                const item = document.createElement('div');
+                item.classList.add('produto-item');
+                item.innerHTML = `
+                    <img src="${imgSrc}" alt="${p.nome}">
+                    <div style="flex: 1;">
+                        <h3>${p.nome}</h3>
+                        <p>${p.categoria} - R$ ${parseFloat(p.preco).toFixed(2)}</p>
+                        <p style="color: #3498db; font-size: 12px;">Link: ${linkStatus}</p>
+                    </div>
+                    <button class="action-btn btn-save" onclick="prepararEdicao(${p.id})"><i class="fa-solid fa-pen"></i> Editar</button>
+                    <button class="action-btn btn-excluir" onclick="excluirProduto(${p.id})"><i class="fa-solid fa-trash"></i> Excluir</button>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        // ===== CARREGAR TODOS OS PRODUTOS =====
+        async function carregarLista() {
+            const resposta = await fetch('/api/produtos', {
+                headers: { 'x-admin-token': token }
+            });
+            todosProdutos = await resposta.json(); // Salva todos os produtos no array global
+            renderizarListaProdutos(todosProdutos);
+        }
+
+        async function prepararEdicao(id) {
+            const resposta = await fetch('/api/produtos', {
+                headers: { 'x-admin-token': token }
+            });
+            const produtos = await resposta.json();
+            const p = produtos.find(prod => prod.id === id);
+            if (!p) return;
+
+            document.getElementById('tituloForm').textContent = 'Editar Produto';
+            document.getElementById('produtoId').value = p.id;
+            document.getElementById('nome').value = p.nome;
+            document.getElementById('categoria').value = p.categoria;
+            document.getElementById('preco').value = p.preco;
+            document.getElementById('descricao').value = p.descricao;
+            document.getElementById('linkPagamento').value = p.link_pagamento || '';
+            
+            btnSubmit.textContent = 'SALVAR ALTERAÇÕES';
+            btnSubmit.classList.add('btn-submit');
+            btnCancelar.style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        async function excluirProduto(id) {
+            if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+            const resposta = await fetch(`/api/produtos/${id}`, { 
+                method: 'DELETE',
+                headers: { 'x-admin-token': token }
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                alert('✅ Produto excluído!');
+                carregarLista(); // Recarrega a lista completa
+            } else {
+                alert('❌ ' + dados.error);
+            }
+        }
+
+        function cancelarEdicao() {
+            form.reset();
+            produtoId.value = '';
+            document.getElementById('tituloForm').textContent = 'Cadastrar Novo Produto';
+            btnSubmit.textContent = 'CADASTRAR PRODUTO';
+            btnCancelar.style.display = 'none';
+            document.getElementById('preview').innerHTML = '';
+            document.getElementById('campoBusca').value = ''; // Limpa a busca
+            carregarLista(); // Recarrega a lista completa
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = produtoId.value;
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/produtos/${id}` : '/api/produtos';
+
+            const formData = new FormData();
+            formData.append('nome', document.getElementById('nome').value);
+            formData.append('categoria', document.getElementById('categoria').value);
+            formData.append('preco', document.getElementById('preco').value);
+            formData.append('descricao', document.getElementById('descricao').value);
+            formData.append('link_pagamento', document.getElementById('linkPagamento').value);
+
+            for (const file of document.getElementById('fotos').files) {
+                formData.append('fotos', file);
+            }
+
+            try {
+                const resposta = await fetch(url, { 
+                    method, 
+                    headers: { 'x-admin-token': token },
+                    body: formData 
+                });
+                const dados = await resposta.json();
+                if (resposta.ok) {
+                    alert('✅ Operação realizada com sucesso!');
+                    cancelarEdicao();
+                    carregarLista();
+                } else {
+                    throw new Error(dados.error || 'Erro na operação');
+                }
+            } catch (erro) {
+                alert('❌ ' + erro.message);
+            }
+        });
+
+        btnCancelar.addEventListener('click', cancelarEdicao);
+        document.getElementById('fotos').addEventListener('change', () => {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            for (const file of document.getElementById('fotos').files) {
+                const url = URL.createObjectURL(file);
+                preview.innerHTML += `<img src="${url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 5px;">`;
+            }
+        });
+
+        // ===== EXECUÇÃO PRINCIPAL =====
+        carregarPedidos();
+        carregarLista();
+    </script>
+</body>
+</html>

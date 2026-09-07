@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Administrador</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; }
+        h1 { color: #800020; text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .btn { background: #f5a623; color: #222; width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn:hover { background: #e0941a; }
+        a { display: block; text-align: center; margin-top: 15px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Login</h1>
+        <form id="formLogin">
+            <label>Senha de Acesso:</label>
+            <input type="password" id="senha" placeholder="Digite a senha do administrador" required>
+            <button type="submit" class="btn">Entrar</button>
+        </form>
+        <a href="/">Voltar para a Loja</a>
+    </div>
+
+    <script>
+        // ⚠️ TROQUE A SENHA AQUI (Deve ser igual à do server.js)
+        const SENHA_ADMIN = "admin123";
+
+        document.getElementById('formLogin').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const senha = document.getElementById('senha').value;
+
+            if (senha === SENHA_ADMIN) {
+                // Salva o token no sessionStorage (para enviar nas requisições das APIs)
+                sessionStorage.setItem('adminToken', senha);
+                
+                // Salva o status para esconder o botão "Conta" na loja
+                localStorage.setItem('isAdmin', 'true');
+                
+                // Redireciona para o admin
+                window.location.href = '/admin';
+            } else {
+                alert('❌ Senha incorreta!');
+            }
+        });
+    </script>
+</body>
+</html>

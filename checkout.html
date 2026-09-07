@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Pedido</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #800020; text-align: center; }
+        .resumo-item { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .total { font-size: 1.5rem; font-weight: bold; color: #800020; margin-top: 20px; }
+        .desconto-info { font-size: 0.9rem; color: #27ae60; margin-top: 5px; }
+        .aviso-whatsapp { font-size: 0.9rem; color: #e74c3c; margin-top: 5px; font-weight: bold; }
+        label { display: block; margin-top: 15px; font-weight: 600; }
+        input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; }
+        .btn { background: #f5a623; color: #222; width: 100%; padding: 15px; margin-top: 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-whatsapp { background: #25D366; color: white; }
+        .btn:hover { background: #e0941a; }
+        .btn-whatsapp:hover { background: #1fb958; }
+        
+        /* Desabilitar botão do site */
+        .btn:disabled { background: #ccc; color: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Finalizar Pedido</h1>
+        
+        <div id="resumoPedido"></div>
+        
+        <div class="total">Total: <span id="totalCheckout">R$ 0,00</span></div>
+        <div class="desconto-info" id="infoDesconto"></div>
+        <div class="aviso-whatsapp" id="avisoWhatsapp" style="display: none;"></div>
+
+        <form id="formCheckout">
+            <label>Nome Completo *</label>
+            <input type="text" id="nome" required>
+
+            <label>Endereço de Entrega *</label>
+            <textarea id="endereco" rows="3" placeholder="Rua, número, bairro, cidade..." required></textarea>
+
+            <label>Telefone / WhatsApp (Opcional, mas importante)</label>
+            <input type="tel" id="whatsapp" placeholder="Ex: (11) 99999-9999" oninput="this.value = this.value.replace(/[^\d+]/g, '')">
+
+            <label>Observações del Cliente</label>
+            <textarea id="observacoes" rows="3" placeholder="Ex: Pode entregar após as 18h?"></textarea>
+
+            <label>Forma de Pagamento:</label>
+            <select id="metodoPagamento" onchange="calcularDesconto()">
+                <option value="dinheiro">💵 Dinheiro na Entrega (10% desconto)</option>
+                <option value="pix">💠 Pix (10% desconto)</option>
+                <option value="cartao_avista">💳 Cartão de Crédito à Vista (5% desconto)</option>
+                <option value="cartao_parcelado">💳 Cartão de Crédito Parcelado (Sem desconto)</option>
+            </select>
+
+            <button type="submit" id="btnSite" class="btn">CONFIRMAR PEDIDO NO SITE</button>
+            <button type="button" id="btnWhatsApp" class="btn btn-whatsapp" onclick="finalizarWhatsApp()">FINALIZAR PELO WHATSAPP</button>
+        </form>
+        
+        <a href="/" style="display: block; text-align: center; margin-top: 20px; color: #888;">Voltar para a Loja</a>
+    </div>
+
+    <script>
+        // Carrega o pedido da sacola
+        const sacola = JSON.parse(localStorage.getItem('pedidoAtual')) || [];
+        let totalSemDesconto = 0;
+
+        function formatarPreco(valor) {
+            return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        const resumoDiv = document.getElementById('resumoPedido');
+        sacola.forEach(item => {
+            totalSemDesconto += item.preco * item.qtd;
+            resumoDiv.innerHTML += `
+                <div class="resumo-item">
+                    <span>${item.nome} (x${item.qtd})</span>
+                    <span>${formatarPreco(item.preco * item.qtd)}</span>
+                </div>
+            `;
+        });
+
+        // Função para calcular desconto e verificar regra de valor mínimo
+        function calcularDesconto() {
+            const metodo = document.getElementById('metodoPagamento').value;
+            let desconto = 0;
+            let descricao = '';
+
+            const totalItens = sacola.reduce((acc, item) => acc + item.qtd, 0);
+
+            if (metodo === 'pix' || metodo === 'dinheiro') {
+                desconto = totalSemDesconto * 0.10;
+                descricao = totalItens > 1 ? `Desconto de 10% (Pix/Dinheiro + Compra múltipla)` : `Desconto de 10% (Pix/Dinheiro)`;
+            } else if (metodo === 'cartao_avista') {
+                desconto = totalSemDesconto * 0.05;
+                descricao = `Desconto de 5% (Cartão à Vista)`;
+            } else {
+                desconto = 0;
+                descricao = `Sem desconto (Cartão Parcelado)`;
+            }
+
+            const totalFinal = totalSemDesconto - desconto;
+            
+            document.getElementById('totalCheckout').innerText = formatarPreco(totalFinal);
+            document.getElementById('infoDesconto').innerText = `${descricao}. Você economiza ${formatarPreco(desconto)}!`;
+            
+            // REGRA: Se total for menor que 10, só finaliza via WhatsApp
+            const btnSite = document.getElementById('btnSite');
+            const aviso = document.getElementById('avisoWhatsapp');
+            
+            if (totalFinal < 10) {
+                btnSite.disabled = true;
+                btnSite.textContent = "PEDIDOS ABAIXO DE R$ 10 SÓ PELO WHATSAPP";
+                aviso.style.display = 'block';
+                aviso.textContent = "⚠️ Para compras abaixo de R$ 10,00, finalize exclusivamente pelo WhatsApp.";
+            } else {
+                btnSite.disabled = false;
+                btnSite.textContent = "CONFIRMAR PEDIDO NO SITE";
+                aviso.style.display = 'none';
+            }
+            
+            return { totalFinal, desconto };
+        }
+
+        // Inicializa o cálculo do desconto
+        calcularDesconto();
+
+        // Função para finalizar pelo WhatsApp (Sempre salva no banco e direciona ao WhatsApp)
+        async function finalizarWhatsApp() {
+            const { totalFinal } = calcularDesconto();
+            const metodo = document.getElementById('metodoPagamento').value;
+
+            const dados = {
+                nome: document.getElementById('nome').value,
+                endereco: document.getElementById('endereco').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                observacoes: document.getElementById('observacoes').value,
+                metodoPagamento: metodo,
+                itens: sacola,
+                total: totalFinal
+            };
+
+            if (!dados.nome || !dados.endereco) {
+                alert("⚠️ Por favor, preencha seu Nome e Endereço de entrega antes de finalizar.");
+                return;
+            }
+
+            try {
+                // Chama a rota que SALVA o pedido no banco E gera o link
+                const resposta = await fetch('/api/pedidos/whatsapp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                if (resposta.ok) {
+                    const { url } = await resposta.json();
+                    // Abre o WhatsApp da loja com a mensagem pronta
+                    window.open(url, '_blank');
+                    
+                    // Limpa a sacola após enviar
+                    localStorage.removeItem('sacola');
+                    localStorage.removeItem('pedidoAtual');
+                    
+                    // Redireciona para a loja
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                } else {
+                    const erro = await resposta.json();
+                    alert('❌ Erro: ' + erro.error);
+                }
+            } catch (erro) {
+                alert('❌ Erro de conexão. Tente novamente.');
+            }
+        }
+
+        // Submissão do formulário (Finalizar no site) - AGORA SEMPRE REDIRECIONA PARA O WHATSAPP
+        document.getElementById('formCheckout').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Verifica se o botão está desabilitado (total < 10)
+            if (document.getElementById('btnSite').disabled) {
+                alert("⚠️ Para compras abaixo de R$ 10,00, finalize exclusivamente pelo WhatsApp.");
+                return;
+            }
+
+            // 1. Salva o pedido no banco
+            const { totalFinal } = calcularDesconto();
+            const metodo = document.getElementById('metodoPagamento').value;
+
+            const dados = {
+                nome: document.getElementById('nome').value,
+                endereco: document.getElementById('endereco').value,
+                whatsapp: document.getElementById('whatsapp').value,
+                observacoes: document.getElementById('observacoes').value,
+                metodoPagamento: metodo,
+                itens: sacola,
+                total: totalFinal
+            };
+
+            try {
+                // Salva no banco
+                const resposta = await fetch('/api/pedidos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                if (resposta.ok) {
+                    // 2. SEMPRE redireciona para o WhatsApp
+                    await finalizarWhatsApp(); // Reutiliza a função que gera o link e abre o WhatsApp
+                } else {
+                    const erro = await resposta.json();
+                    alert('❌ Erro ao enviar pedido: ' + erro.error);
+                }
+            } catch (erro) {
+                alert('❌ Erro de conexão. Tente novamente.');
+            }
+        });
+    </script>
+</body>
+</html>
